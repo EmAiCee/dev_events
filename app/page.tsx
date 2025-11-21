@@ -6,6 +6,7 @@ import { events } from "@/lib/constant"
 
 
 const page = () => {
+  
   return (
     <section>
 
