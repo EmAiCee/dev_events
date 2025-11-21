@@ -27,7 +27,7 @@ const bookingSchema = new Schema<BookingDocument>(
       type: Schema.Types.ObjectId,
       ref: 'Event',
       required: true,
-      index: true, // index to speed up event-based lookups
+      index: true, // index to speed up the event-based lookups
     },
     email: {
       type: String,
