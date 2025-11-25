@@ -65,6 +65,6 @@ export async function GET(){
     const events=await EventModel.find().sort({ createdAt: -1 }).lean();
     return NextResponse.json( { message:"Events fetched successfully",data:events}, { status: 200 } );
     }catch(e){
-   return NextResponse.json( { message:"Failed to fetch events",error:e }, { status: 500 } );
+   return NextResponse.json( { message:"Failed to fetch events",error:e instanceof Error?e.message:"Unknown"}, { status: 500 } );
     }
 }
