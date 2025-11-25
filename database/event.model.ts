@@ -5,14 +5,14 @@ import { Schema, model, models, Document, Model } from 'mongoose';
  */
 export interface Event {
   title: string;
-  slug: string;
+  slug?: string; // optional now
   description: string;
   overview: string;
   image: string;
   venue: string;
   location: string;
-  date: string; // Normalized date string (ISO format)
-  time: string; // Normalized time string (HH:mm, 24-hour)
+  date: string; // ISO format
+  time: string; // HH:mm 24-hour
   mode: string;
   audience: string;
   agenda: string[];
@@ -24,64 +24,38 @@ export interface Event {
 
 export type EventDocument = Event & Document;
 
-/**
- * Simple slugify helper to generate URL-friendly slugs from titles.
- */
+/** Slugify helper */
 function slugifyTitle(title: string): string {
   return title
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s-]/g, '') // remove non-alphanumeric characters
-    .replace(/\s+/g, '-') // replace spaces with dashes
-    .replace(/-+/g, '-'); // collapse multiple dashes
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
 }
 
-/**
- * Normalize a date string to ISO-8601 (YYYY-MM-DD) format.
- * Throws if the date is invalid.
- */
+/** Normalize date to YYYY-MM-DD */
 function normalizeDate(dateInput: string): string {
   const date = new Date(dateInput);
-
-  if (Number.isNaN(date.getTime())) {
-    throw new Error('Invalid date format for Event.date');
-  }
-
-  // Keep only the date part in UTC (YYYY-MM-DD)
-  const iso = date.toISOString();
-  return iso.split('T')[0];
+  if (Number.isNaN(date.getTime())) throw new Error('Invalid date format for Event.date');
+  return date.toISOString().split('T')[0];
 }
 
-/**
- * Normalize time to HH:mm (24-hour) format.
- * Accepts inputs like "9:00", "09:00", "21:30".
- */
+/** Normalize time to HH:mm */
 function normalizeTime(timeInput: string): string {
-  const trimmed = timeInput.trim();
-
-  // Basic HH:mm or H:mm validation
-  const match = trimmed.match(/^(\d{1,2}):(\d{2})$/);
-  if (!match) {
-    throw new Error('Invalid time format for Event.time (expected H:MM or HH:MM)');
-  }
-
+  const match = timeInput.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) throw new Error('Invalid time format for Event.time');
   const hours = Number(match[1]);
   const minutes = Number(match[2]);
-
-  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59)
     throw new Error('Invalid time value for Event.time');
-  }
-
-  // Zero-pad to HH:mm
-  const hh = hours.toString().padStart(2, '0');
-  const mm = minutes.toString().padStart(2, '0');
-  return `${hh}:${mm}`;
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 }
 
+/** Event schema */
 const eventSchema = new Schema<EventDocument>(
   {
     title: { type: String, required: true, trim: true },
-    slug: { type: String, required: true, unique: true, trim: true },
     description: { type: String, required: true, trim: true },
     overview: { type: String, required: true, trim: true },
     image: { type: String, required: true, trim: true },
@@ -94,26 +68,18 @@ const eventSchema = new Schema<EventDocument>(
     agenda: { type: [String], required: true, validate: (v: string[]) => v.length > 0 },
     organizer: { type: String, required: true, trim: true },
     tags: { type: [String], required: true, validate: (v: string[]) => v.length > 0 },
+    slug: { type: String, unique: true, trim: true }, // optional, stored in DB
   },
-  {
-    timestamps: true,
-  },
+  { timestamps: true }
 );
 
-// Ensure slug has a unique index at the database level.
+/** Ensure slug uniqueness */
 eventSchema.index({ slug: 1 }, { unique: true });
 
-/**
- * Pre-save hook for Event documents:
- * - Generates a slug from the title when creating or when the title changes.
- * - Normalizes `date` to a canonical ISO (YYYY-MM-DD) string.
- * - Normalizes `time` to HH:mm (24-hour) format.
- * - Ensures required string fields are non-empty after trimming.
- */
-eventSchema.pre<EventDocument>('save', function preSave(next) {
+/** Pre-save hook to generate slug & normalize fields */
+eventSchema.pre<EventDocument>('save', function (next) {
   try {
-    // Validate and normalize basic string fields.
-    const requiredStringFields: Array<keyof Event> = [
+    const requiredFields: Array<keyof Event> = [
       'title',
       'description',
       'overview',
@@ -124,27 +90,24 @@ eventSchema.pre<EventDocument>('save', function preSave(next) {
       'audience',
       'organizer',
     ];
-
-    for (const field of requiredStringFields) {
+    for (const field of requiredFields) {
       const value = this.get(field);
-      if (typeof value !== 'string' || value.trim().length === 0) {
-        throw new Error(`Event.${String(field)} is required and must be a non-empty string`);
-      }
+      if (typeof value !== 'string' || value.trim().length === 0)
+        throw new Error(`Event.${String(field)} is required and must be non-empty`);
       this.set(field, value.trim());
     }
 
-    // Normalize date and time.
     this.date = normalizeDate(this.date);
     this.time = normalizeTime(this.time);
 
-    // Only regenerate slug when the title is new or has changed.
-    if (this.isNew || this.isModified('title')) {
+    // Generate slug if missing or title changed
+    if (!this.slug || this.isNew || this.isModified('title')) {
       this.slug = slugifyTitle(this.title);
     }
 
     next();
-  } catch (error) {
-    next(error as Error);
+  } catch (err) {
+    next(err as Error);
   }
 });
 
