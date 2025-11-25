@@ -43,7 +43,7 @@ export async function POST(request:NextRequest){
     }catch (e) {
         console.error( e);
 
-        return NextResponse.json( { message:"Failed to create event",error:e instanceof Error?e.message:"UnKnown"}, { status: 500 } );
+        return NextResponse.json( { message:"Failed to create event",error:e instanceof Error?e.message:"Unknown"}, { status: 500 } );
     }
 }
 
