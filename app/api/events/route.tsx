@@ -19,6 +19,17 @@ export async function POST(request:NextRequest){
 
     const file =formData.get("image") as File;
     if(!file)return NextResponse.json( { message:"Image file is required"}, { status: 400 } );
+    
+    // Validate file type
+    if(!file.type.startsWith("image/")) {
+      return NextResponse.json( { message:"File must be an image"}, { status: 400 } );
+    }
+    
+    // Validate file size (e.g., max 5MB)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024;
+    if(file.size > MAX_FILE_SIZE) {
+      return NextResponse.json( { message:"Image size must be less than 5MB"}, { status: 400 } );
+    }
     let tags, agenda;
     try {
       tags=JSON.parse(formData.get("tags") as string);
