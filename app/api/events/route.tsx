@@ -19,8 +19,12 @@ export async function POST(request:NextRequest){
 
     const file =formData.get("image") as File;
     if(!file)return NextResponse.json( { message:"Image file is required"}, { status: 400 } );
-    let tags=JSON.parse(formData.get("tags") as string);
-     let agenda=JSON.parse(formData.get("agenda") as string);
+    try {
+      let tags=JSON.parse(formData.get("tags") as string);
+      let agenda=JSON.parse(formData.get("agenda") as string);
+    } catch(e) {
+      return NextResponse.json( { message:"Invalid JSON in tags or agenda"}, { status: 400 } );
+    }
    const arrayBuffer=await file.arrayBuffer();
    const buffer=Buffer.from(arrayBuffer);
 
