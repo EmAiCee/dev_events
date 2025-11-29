@@ -14,21 +14,18 @@ export async function createBooking(slug: string, email: string) {
       return { success: false, error: "Event not found" };
     }
 
-    // Check if already booked
-    const existingBooking = await BookingModel.findOne({
-      eventId: event._id,
-      email,
-    });
+    // Atomically find or create booking
+    const result = await BookingModel.findOneAndUpdate(
+      { eventId: event._id, email },
+      { $setOnInsert: { eventId: event._id, email } },
+      { upsert: true, new: true, rawResult: true }
+    );
 
-    if (existingBooking) {
+    if (!result.lastErrorObject?.upsertedId) {
       return { success: true, alreadyBooked: true, email };
     }
 
-    // Create booking
-    await BookingModel.create({
-      eventId: event._id,
-      email,
-    });
+    return { success: true, email };
 
     return { success: true, email };
   } catch (error) {
