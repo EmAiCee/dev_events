@@ -6,6 +6,14 @@ import { BookingModel } from "@/database/booking.model";
 
 export async function createBooking(slug: string, email: string) {
   try {
+    // Validate inputs
+    if (!slug?.trim()) {
+      return { success: false, error: "Event slug is required" };
+    }
+    if (!email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return { success: false, error: "Valid email is required" };
+    }
+
     await connectToDatabase();
 
     // Find event by slug
@@ -24,8 +32,6 @@ export async function createBooking(slug: string, email: string) {
     if (!result.lastErrorObject?.upsertedId) {
       return { success: true, alreadyBooked: true, email };
     }
-
-    return { success: true, email };
 
     return { success: true, email };
   } catch (error) {
