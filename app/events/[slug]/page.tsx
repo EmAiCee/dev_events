@@ -89,7 +89,7 @@ const  event = await request.json();
 ):(
   <p className="text-sm"> Be the first one to book your spot!</p>
 )}
-<BookEvent />
+<BookEvent slug={slug} />
  </div>
 </aside>
     </div>

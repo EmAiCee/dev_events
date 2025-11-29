@@ -8,11 +8,21 @@ import { cacheLife } from "next/cache";
 
 const BASE_URL=process.env.NEXT_PUBLIC_BASE_URL;
 const page = async () => {
-  'use cache';
-  cacheLife('hours')
-    const response = await fetch(`${BASE_URL}/api/events`);
+  // 'use cache';
+  // cacheLife('hours')
+     const response = await fetch(`${BASE_URL}/api/events`);
+    
+    if (!response.ok) {
+      console.error('Failed to fetch events:', response.status);
+      return (
+        <section>
+          <h1 className='text-center'>Failed to load events</h1>
+        </section>
+      );
+    }
+    
+   const { events } = await response.json();
 
-     const {data: events}=await response.json();
   return (
     <section>
 
