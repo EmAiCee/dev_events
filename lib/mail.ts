@@ -18,7 +18,7 @@ export async function sendConfirmationEmail({
   name,
   eventDetails
 }: MailData): Promise<void> {
-  console.log("📧 Sending confirmation email to:", email);
+  console.log("📧 Sending confirmation email...");
 
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_PASS;
