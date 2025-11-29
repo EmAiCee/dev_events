@@ -1,8 +1,8 @@
 "use server";
 
-import connectToDatabase from "@/lib/mongodb";
-import EventModel from "@/database/event.model";
-import BookingModel from "@/database/booking.model";
+import { connectToDatabase } from "@/lib/mongodb";
+import { EventModel } from "@/database/event.model";
+import { BookingModel } from "@/database/booking.model";
 
 export async function createBooking(slug: string, email: string) {
   try {
