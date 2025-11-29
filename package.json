@@ -12,6 +12,7 @@
     "cloudinary": "^2.8.0",
     "mongoose": "^8.20.1",
     "next": "16.0.3",
+    "nodemailer": "^7.0.10",
     "ogl": "^1.0.11",
     "posthog-js": "^1.297.2",
     "react": "19.2.0",
