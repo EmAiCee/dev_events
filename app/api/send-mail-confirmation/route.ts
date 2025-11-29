@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import connectToDatabase from "@/lib/mongodb";
-import EventModel from "@/database/event.model";
+import { connectToDatabase } from "@/lib/mongodb";
+import { EventModel } from "@/database/event.model";
 import { sendConfirmationEmail } from "@/lib/mail";
 
 export async function POST(request: Request) {
