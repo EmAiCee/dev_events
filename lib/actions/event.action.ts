@@ -1,7 +1,7 @@
 'use server';
 import { EventModel } from '@/database'; 
 import connectToDatabase from '../mongodb';
- export const getSimilarEventsBySlug=async (slug:string)=>{
+ export const getSemilarEventsBySlug=async (slug:string)=>{
     try{
 
         await connectToDatabase();

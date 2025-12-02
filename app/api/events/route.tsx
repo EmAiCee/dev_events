@@ -4,8 +4,8 @@
 import {NextRequest, NextResponse} from "next/server";
 import { v2 as cloudinary } from 'cloudinary';
 
-import { connectToDatabase } from "@/lib/mongodb";
-import { EventModel } from "@/database/event.model";
+import {connectToDatabase} from "@/lib/mongodb";
+import {EventModel }from "@/database/event.model";
 
 export async function POST(req: NextRequest) {
     try {
@@ -25,13 +25,8 @@ export async function POST(req: NextRequest) {
 
         if(!file) return NextResponse.json({ message: 'Image file is required'}, { status: 400 })
 
-        let tags, agenda;
-        try {
-          tags = JSON.parse(formData.get('tags') as string);
-          agenda = JSON.parse(formData.get('agenda') as string);
-        } catch {
-          return NextResponse.json({ message: 'Invalid tags or agenda format' }, { status: 400 });
-        }
+        let tags = JSON.parse(formData.get('tags') as string);
+        let agenda = JSON.parse(formData.get('agenda') as string);
 
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
@@ -67,7 +62,6 @@ export async function GET() {
 
         return NextResponse.json({ message: 'Events fetched successfully', events }, { status: 200 });
     } catch (e) {
-        console.error(e);
-        return NextResponse.json({ message: 'Event fetching failed', error: e instanceof Error ? e.message : 'Unknown' }, { status: 500 });
+        return NextResponse.json({ message: 'Event fetching failed', error: e }, { status: 500 });
     }
 }
