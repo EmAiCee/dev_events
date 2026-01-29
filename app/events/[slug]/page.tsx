@@ -5,6 +5,7 @@ import BookEvent from "@/app/components/BookEvent";
 import { getSemilarEventsBySlug } from "@/lib/actions/event.action";
 import { EventEmitter } from "stream";
 import EventCard from "@/app/components/EventCard";
+import { getBookingCount } from "@/lib/actions/booking-count";
 const BASE_URL=process.env.NEXT_PUBLIC_BASE_URL;
 
 const EventdetailItem=({icon,alt,label}:{icon:string,alt:string,label:string})=>{
@@ -44,7 +45,7 @@ const  event = await request.json();
 
 
     if(!event) return notFound();
-    const bookings=20;
+      const bookings = await getBookingCount(event._id);
     const similarEvents= await getSemilarEventsBySlug(slug); 
    
 
@@ -84,11 +85,14 @@ const  event = await request.json();
 <aside className="booking">
  <div className="signup-card">
 <h2>Book Your Event</h2>
-{bookings>0 ? (
-  <p className="text-sm">join {bookings} people who have aready booked their spot</p>
-):(
-  <p className="text-sm"> Be the first one to book your spot!</p>
+{bookings > 0 ? (
+  <p className="text-sm">
+    join {bookings} {bookings === 1 ? "person" : "people"} who have already booked their spot
+  </p>
+) : (
+  <p className="text-sm">Be the first one to book your spot!</p>
 )}
+
 <BookEvent slug={slug} />
  </div>
 </aside>
