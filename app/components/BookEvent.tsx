@@ -12,7 +12,6 @@ const BookEvent: React.FC<BookEventProps> = ({ slug }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [emailWarning, setEmailWarning] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -20,9 +19,10 @@ const BookEvent: React.FC<BookEventProps> = ({ slug }) => {
 
     setIsSubmitting(true);
     setMessage(null);
-    setEmailWarning(null);
 
     try {
+      // 1️⃣ Create booking
+      console.log('🔹 Creating booking for:', email);
       const bookingResult = await createBooking(slug, email);
 
       if (!bookingResult.success) {
@@ -37,38 +37,32 @@ const BookEvent: React.FC<BookEventProps> = ({ slug }) => {
         return; // Do not send email if already booked
       }
 
-      // Booking is new, attempt to send email
-      let emailStatusMessage = '';
-      try {
-        const response = await fetch('/api/send-mail-confirmation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email,
-            name: bookingResult.name || 'Guest',
-            eventId: slug,
-          }),
-        });
+      // 2️⃣ Booking is new, send email
+      console.log('🌐 Calling /api/send-mail-confirmation...', { email, slug });
+      const response = await fetch(`${window.location.origin}/api/send-mail-confirmation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          eventId: slug,
+        }),
+      });
 
-        if (!response.ok) {
-          const errorBody = await response.json().catch(() => null);
-          console.error('EMAIL ERROR: API responded with non-OK status', {
-            status: response.status,
-            statusText: response.statusText,
-            body: errorBody,
-          });
-          emailStatusMessage = ' (Failed to send confirmation email)';
-        } else {
-          emailStatusMessage = ` A confirmation email has been sent to ${email}.`;
-          console.log('📨 Email sent successfully');
-        }
-      } catch (err) {
-        console.error('EMAIL ERROR: Failed to call /api/send-mail-confirmation', err);
-        emailStatusMessage = ' (Failed to send confirmation email)';
+      console.log('🌐 Email API response status:', response.status);
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        console.error('EMAIL ERROR: API responded with non-OK status', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorBody,
+        });
+        setMessage('Thank you for booking! (Failed to send confirmation email)');
+      } else {
+        console.log('📨 Email sent successfully');
+        setMessage(`Thank you for booking! A confirmation email has been sent to ${email}.`);
       }
 
-      // Set combined booking + email message
-      setMessage(`Thank you for booking!${emailStatusMessage}`);
       setSubmitted(true);
     } catch (err) {
       console.error('BOOKING ERROR: Unexpected error', err);
@@ -84,7 +78,6 @@ const BookEvent: React.FC<BookEventProps> = ({ slug }) => {
         <div>
           <h2>Thank you for booking!</h2>
           {message && <p>{message}</p>}
-          {emailWarning && <p className="text-yellow-600">{emailWarning}</p>}
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="flex-col-gap-4">
@@ -104,7 +97,6 @@ const BookEvent: React.FC<BookEventProps> = ({ slug }) => {
             {isSubmitting ? 'Submitting...' : 'Submit'}
           </button>
           {message && <p>{message}</p>}
-          {emailWarning && <p className="text-yellow-600">{emailWarning}</p>}
         </form>
       )}
     </div>

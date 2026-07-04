@@ -1,58 +1,43 @@
-import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongodb";
-import { EventModel } from "@/database/event.model";
-import { sendConfirmationEmail } from "@/lib/mail";
+import { NextResponse } from 'next/server';
+import nodemailer from 'nodemailer';
 
-export async function POST(request: Request) {
+// 🔹 Debug log when file loads
+console.log('🟢 send-mail-confirmation API loaded');
+
+export async function POST(req: Request) {
+  console.log('📩 Mail route hit!');
+
   try {
-    console.log("📩 Mail route hit!");
+    const { email, name, eventId } = await req.json();
 
-    const body = await request.json();
-    const { email, name, eventId } = body;
-
-    // Validate
     if (!email || !name || !eventId) {
-      console.log("❌ Missing fields:", body);
-      return NextResponse.json(
-        { message: "Missing required fields" },
-        { status: 400 }
-      );
+      console.warn('⚠️ Missing fields in request body');
+      return NextResponse.json({ success: false, error: 'Missing fields' }, { status: 400 });
     }
 
-    // Connect to DB
-    await connectToDatabase();
+    // Configure transporter
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
-    // 🔵 SIMPLE FETCH → Find by slug only
-    const event = await EventModel.findOne({ slug: eventId }).lean();
-
-    if (!event) {
-      return NextResponse.json(
-        { message: "Event not found" },
-        { status: 404 }
-      );
-    }
-
-    // Extract event details
-    const eventDetails = {
-      title: event.title,
-      date: event.date,
-      time: event.time,
-      location: event.location,
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: `Booking Confirmation for Event: ${eventId}`,
+      text: `Hello ${name},\n\nThank you for booking the event "${eventId}". We look forward to seeing you!\n\n- DEVEVENTS Team`,
     };
 
-    // Send email
-    await sendConfirmationEmail({ email, name, eventDetails });
+    const info = await transporter.sendMail(mailOptions);
 
-    return NextResponse.json(
-      { message: "Email sent successfully" },
-      { status: 200 }
-    );
+    console.log('📨 Email sent:', info.response);
 
-  } catch (error: any) {
-    console.error("❌ Email error:", error);
-    return NextResponse.json(
-      { message: "Failed to send email", error: error.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, info: info.response });
+  } catch (error) {
+    console.error('EMAIL ERROR:', error);
+    return NextResponse.json({ success: false, error: 'Failed to send email' }, { status: 500 });
   }
 }
